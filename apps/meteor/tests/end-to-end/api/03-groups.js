@@ -62,13 +62,31 @@ describe('[Groups]', function () {
 
 	describe('/groups.create', () => {
 		let guestUser;
+		let invitedUser;
+		let invitedUserCredentials;
 		let room;
+		let teamId;
 
 		before(async () => {
 			guestUser = await createUser({ roles: ['guest'] });
+			invitedUser = await createUser();
+			invitedUserCredentials = await login(invitedUser.username, password);
+			const teamCreateRes = await request
+				.post(api('teams.create'))
+				.set(credentials)
+				.send({
+					name: `team-${Date.now()}`,
+					type: 0,
+					members: [invitedUser.username],
+				});
+
+			teamId = teamCreateRes.body.team._id;
+			await updatePermission('create-team-group', ['owner']);
 		});
 		after(async () => {
 			await deleteUser(guestUser);
+			await deleteUser(invitedUser);
+			await updatePermission('create-team-group', ['admin', 'owner', 'moderator']);
 		});
 
 		describe('guest users', () => {
@@ -170,6 +188,37 @@ describe('[Groups]', function () {
 						expect(res.body).to.have.nested.property('group.encrypted', true);
 					});
 			});
+		});
+
+		it('should successfully create a group in a team', async () => {
+			await request
+				.post(api('groups.create'))
+				.set(credentials)
+				.send({
+					name: `team-group-${Date.now()}`,
+					extraData: { teamId },
+				})
+				.expect(200)
+				.expect((res) => {
+					expect(res.body).to.have.property('success', true);
+					expect(res.body).to.have.property('group');
+					expect(res.body.group).to.have.property('teamId', teamId);
+				});
+		});
+
+		it('should fail creating a group in a team when member does not have the necessary permission', async () => {
+			await request
+				.post(api('groups.create'))
+				.set(invitedUserCredentials)
+				.send({
+					name: `team-group-${Date.now()}`,
+					extraData: { teamId },
+				})
+				.expect(403)
+				.expect((res) => {
+					expect(res.body).to.have.property('success', false);
+					expect(res.body).to.have.property('error', 'unauthorized');
+				});
 		});
 	});
 
