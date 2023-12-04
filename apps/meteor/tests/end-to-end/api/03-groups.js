@@ -229,10 +229,10 @@ describe('[Groups]', function () {
 					name: `team-group-${Date.now()}`,
 					extraData: { teamId },
 				})
-				.expect(403)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.have.property('success', false);
-					expect(res.body).to.have.property('error', 'unauthorized');
+					expect(res.body).to.have.property('errorType', 'error-not-allowed');
 				});
 		});
 	});
