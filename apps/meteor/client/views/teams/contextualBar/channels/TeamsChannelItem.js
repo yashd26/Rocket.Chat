@@ -19,7 +19,7 @@ import { usePreventPropagation } from '../../../../hooks/usePreventPropagation';
 import { roomCoordinator } from '../../../../lib/rooms/roomCoordinator';
 import RoomActions from './RoomActions';
 
-const TeamsChannelItem = ({ room, onClickView, reload }) => {
+const TeamsChannelItem = ({ room, mainRoomId, onClickView, reload }) => {
 	const t = useTranslation();
 	const rid = room._id;
 	const type = room.t;
@@ -28,7 +28,9 @@ const TeamsChannelItem = ({ room, onClickView, reload }) => {
 
 	const canRemoveTeamChannel = usePermission('remove-team-channel', rid);
 	const canEditTeamChannel = usePermission('edit-team-channel', rid);
-	const canDeleteTeamChannel = usePermission(type === 'c' ? 'delete-c' : 'delete-p', rid);
+	const canDeleteChannel = usePermission(`delete-${type}`, rid);
+	const canDeleteTeamChannel = usePermission(`delete-team-${type === 'c' ? 'channel' : 'group'}`, mainRoomId);
+	const canDelete = canDeleteChannel && canDeleteTeamChannel;
 
 	const isReduceMotionEnabled = usePrefersReducedMotion();
 	const handleMenuEvent = {
@@ -55,9 +57,9 @@ const TeamsChannelItem = ({ room, onClickView, reload }) => {
 					)}
 				</Box>
 			</OptionContent>
-			{(canRemoveTeamChannel || canEditTeamChannel || canDeleteTeamChannel) && (
+			{(canRemoveTeamChannel || canEditTeamChannel || canDelete) && (
 				<OptionMenu onClick={onClick}>
-					{showButton ? <RoomActions room={room} reload={reload} /> : <IconButton tiny icon='kebab' />}
+					{showButton ? <RoomActions room={room} reload={reload} mainRoomId={mainRoomId} /> : <IconButton tiny icon='kebab' />}
 				</OptionMenu>
 			)}
 		</Option>

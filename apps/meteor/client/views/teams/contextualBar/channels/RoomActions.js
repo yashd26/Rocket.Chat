@@ -19,14 +19,16 @@ const useReactModal = (Component, props) => {
 	});
 };
 
-const RoomActions = ({ room, reload }) => {
+const RoomActions = ({ room, mainRoomId, reload }) => {
 	const t = useTranslation();
 	const rid = room._id;
 	const type = room.t;
 
 	const dispatchToastMessage = useToastMessageDispatch();
 
-	const canDeleteTeamChannel = usePermission(type === 'c' ? 'delete-c' : 'delete-p', rid);
+	const canDeleteChannel = usePermission(`delete-${type}`, rid);
+	const canDeleteTeamChannel = usePermission(`delete-team-${type === 'c' ? 'channel' : 'group'}`, mainRoomId);
+	const canDelete = canDeleteChannel && canDeleteTeamChannel;
 	const canEditTeamChannel = usePermission('edit-team-channel', rid);
 	const canRemoveTeamChannel = usePermission('remove-team-channel', rid);
 
@@ -107,7 +109,7 @@ const RoomActions = ({ room, reload }) => {
 				},
 				action: RemoveFromTeamAction,
 			},
-			canDeleteTeamChannel && {
+			canDelete && {
 				label: {
 					label: t('Delete'),
 					icon: 'trash',
@@ -125,7 +127,7 @@ const RoomActions = ({ room, reload }) => {
 		updateRoomEndpoint,
 		reload,
 		dispatchToastMessage,
-		canDeleteTeamChannel,
+		canDelete,
 		canRemoveTeamChannel,
 		canEditTeamChannel,
 	]);
@@ -146,7 +148,7 @@ const RoomActions = ({ room, reload }) => {
 					</Box>
 				)
 			}
-			options={(canEditTeamChannel || canRemoveTeamChannel || canDeleteTeamChannel) && menuOptions}
+			options={(canEditTeamChannel || canRemoveTeamChannel || canDelete) && menuOptions}
 		/>
 	);
 };
