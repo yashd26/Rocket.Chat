@@ -1725,22 +1725,72 @@ describe('[Channels]', function () {
 		});
 	});
 
-	describe('/channels.delete:', () => {
+	describe('/channels.delete', () => {
 		let testChannel;
-		it('/channels.create', (done) => {
-			request
-				.post(api('channels.create'))
+		let testTeamChannel;
+		let testModeratorTeamChannel;
+		let invitedUser;
+		let moderatorUser;
+		let invitedUserCredentials;
+		let moderatorUserCredentials;
+		let teamId;
+		let teamMainRoomId;
+		before(async () => {
+			testChannel = (await createRoom({ name: `channel.test.${Date.now()}`, type: 'c' })).body.channel;
+			invitedUser = await createUser();
+			moderatorUser = await createUser();
+			invitedUserCredentials = await login(invitedUser.username, password);
+			moderatorUserCredentials = await login(moderatorUser.username, password);
+
+			const teamCreateRes = await request
+				.post(api('teams.create'))
 				.set(credentials)
 				.send({
-					name: `channel.test.${Date.now()}`,
-				})
-				.end((err, res) => {
-					testChannel = res.body.channel;
-					done();
+					name: `team-${Date.now()}`,
+					type: 0,
+					members: [invitedUser.username, moderatorUser.username],
 				});
+			teamId = teamCreateRes.body.team._id;
+			teamMainRoomId = teamCreateRes.body.team.roomId;
+
+			await updatePermission('delete-team-channel', ['owner', 'moderator']);
+			await updatePermission('create-team-channel', ['admin', 'owner', 'moderator', 'user']);
+			const teamChannelResponse = await createRoom({
+				name: `channel.test.${Date.now()}`,
+				type: 'c',
+				teamId,
+				credentials: invitedUserCredentials,
+			});
+			testTeamChannel = teamChannelResponse.body.channel;
+
+			await request
+				.post(api('channels.addModerator'))
+				.set(credentials)
+				.send({
+					userId: moderatorUser._id,
+					roomId: teamMainRoomId,
+				})
+				.expect('Content-Type', 'application/json')
+				.expect(200)
+				.expect((res) => {
+					expect(res.body).to.have.property('success', true);
+				});
+			const teamModeratorChannelResponse = await createRoom({
+				name: `channel.test.moderator.${Date.now()}`,
+				type: 'c',
+				teamId,
+				credentials: moderatorUserCredentials,
+			});
+			testModeratorTeamChannel = teamModeratorChannelResponse.body.channel;
 		});
-		it('/channels.delete', (done) => {
-			request
+		after(async () => {
+			await deleteUser(invitedUser);
+			await deleteUser(moderatorUser);
+			await updatePermission('create-team-channel', ['admin', 'owner', 'moderator']);
+			await updatePermission('delete-team-channel', ['admin', 'owner', 'moderator']);
+		});
+		it('should succesfully delete a channel', async () => {
+			await request
 				.post(api('channels.delete'))
 				.set(credentials)
 				.send({
@@ -1750,11 +1800,10 @@ describe('[Channels]', function () {
 				.expect(200)
 				.expect((res) => {
 					expect(res.body).to.have.property('success', true);
-				})
-				.end(done);
+				});
 		});
-		it('/channels.info', (done) => {
-			request
+		it(`should fail retrieving a channel's info after it's been deleted`, async () => {
+			await request
 				.get(api('channels.info'))
 				.set(credentials)
 				.query({
@@ -1765,8 +1814,36 @@ describe('[Channels]', function () {
 				.expect((res) => {
 					expect(res.body).to.have.property('success', false);
 					expect(res.body).to.have.property('errorType', 'error-room-not-found');
+				});
+		});
+		it(`should fail deleting a team's channel when member does not have the necessary permission in the team`, async () => {
+			await request
+				.post(api('channels.delete'))
+				.set(invitedUserCredentials)
+				.send({
+					roomName: testTeamChannel.name,
 				})
-				.end(done);
+				.expect('Content-Type', 'application/json')
+				.expect(400)
+				.expect((res) => {
+					expect(res.body).to.have.property('success', false);
+					expect(res.body).to.have.a.property('error');
+					expect(res.body).to.have.a.property('errorType');
+					expect(res.body.errorType).to.be.equal('error-not-allowed');
+				});
+		});
+		it(`should successfully delete a team's channel when member has both team and channel permissions`, async () => {
+			await request
+				.post(api('channels.delete'))
+				.set(moderatorUserCredentials)
+				.send({
+					roomId: testModeratorTeamChannel._id,
+				})
+				.expect('Content-Type', 'application/json')
+				.expect(200)
+				.expect((res) => {
+					expect(res.body).to.have.property('success', true);
+				});
 		});
 	});
 

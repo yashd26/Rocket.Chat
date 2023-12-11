@@ -1616,22 +1616,70 @@ describe('[Groups]', function () {
 
 	describe('/groups.delete', () => {
 		let testGroup;
+		let testTeamGroup;
+		let testModeratorTeamGroup;
+		let invitedUser;
+		let moderatorUser;
+		let invitedUserCredentials;
+		let moderatorUserCredentials;
+		let teamId;
+		let teamMainRoomId;
 		before(async () => {
-			await request
-				.post(api('groups.create'))
+			testGroup = (await createRoom({ name: `group.test.${Date.now()}`, type: 'c' })).body.group;
+			invitedUser = await createUser();
+			moderatorUser = await createUser();
+			invitedUserCredentials = await login(invitedUser.username, password);
+			moderatorUserCredentials = await login(moderatorUser.username, password);
+
+			const teamCreateRes = await request
+				.post(api('teams.create'))
 				.set(credentials)
 				.send({
-					name: `group.test.${Date.now()}`,
+					name: `team-${Date.now()}`,
+					type: 0,
+					members: [invitedUser.username, moderatorUser.username],
+				});
+			teamId = teamCreateRes.body.team._id;
+			teamMainRoomId = teamCreateRes.body.team.roomId;
+
+			await updatePermission('delete-team-group', ['owner', 'moderator']);
+			await updatePermission('create-team-group', ['admin', 'owner', 'moderator', 'user']);
+			const teamGroupResponse = await createRoom({
+				name: `group.test.${Date.now()}`,
+				type: 'p',
+				teamId,
+				credentials: invitedUserCredentials,
+			});
+			testTeamGroup = teamGroupResponse.body.group;
+
+			await request
+				.post(api('groups.addModerator'))
+				.set(credentials)
+				.send({
+					userId: moderatorUser._id,
+					roomId: teamMainRoomId,
 				})
 				.expect('Content-Type', 'application/json')
 				.expect(200)
 				.expect((res) => {
-					testGroup = res.body.group;
+					expect(res.body).to.have.property('success', true);
 				});
+			const teamModeratorGroupResponse = await createRoom({
+				name: `group.test.moderator.${Date.now()}`,
+				type: 'p',
+				teamId,
+				credentials: moderatorUserCredentials,
+			});
+			testModeratorTeamGroup = teamModeratorGroupResponse.body.group;
 		});
-
-		it('should delete group', (done) => {
-			request
+		after(async () => {
+			await deleteUser(invitedUser);
+			await deleteUser(moderatorUser);
+			await updatePermission('create-team-group', ['admin', 'owner', 'moderator']);
+			await updatePermission('delete-team-group', ['admin', 'owner', 'moderator']);
+		});
+		it('should succesfully delete a group', async () => {
+			await request
 				.post(api('groups.delete'))
 				.set(credentials)
 				.send({
@@ -1641,12 +1689,10 @@ describe('[Groups]', function () {
 				.expect(200)
 				.expect((res) => {
 					expect(res.body).to.have.property('success', true);
-				})
-				.end(done);
+				});
 		});
-
-		it('should return group not found', (done) => {
-			request
+		it(`should fail retrieving a group's info after it's been deleted`, async () => {
+			await request
 				.get(api('groups.info'))
 				.set(credentials)
 				.query({
@@ -1657,8 +1703,36 @@ describe('[Groups]', function () {
 				.expect((res) => {
 					expect(res.body).to.have.property('success', false);
 					expect(res.body).to.have.property('errorType', 'error-room-not-found');
+				});
+		});
+		it(`should fail deleting a team's group when member does not have the necessary permission in the team`, async () => {
+			await request
+				.post(api('groups.delete'))
+				.set(invitedUserCredentials)
+				.send({
+					roomName: testTeamGroup.name,
 				})
-				.end(done);
+				.expect('Content-Type', 'application/json')
+				.expect(400)
+				.expect((res) => {
+					expect(res.body).to.have.property('success', false);
+					expect(res.body).to.have.a.property('error');
+					expect(res.body).to.have.a.property('errorType');
+					expect(res.body.errorType).to.be.equal('error-not-allowed');
+				});
+		});
+		it(`should successfully delete a team's group when member has both team and group permissions`, async () => {
+			await request
+				.post(api('groups.delete'))
+				.set(moderatorUserCredentials)
+				.send({
+					roomId: testModeratorTeamGroup._id,
+				})
+				.expect('Content-Type', 'application/json')
+				.expect(200)
+				.expect((res) => {
+					expect(res.body).to.have.property('success', true);
+				});
 		});
 	});
 
