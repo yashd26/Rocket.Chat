@@ -71,6 +71,8 @@ describe('[Groups]', function () {
 			guestUser = await createUser({ roles: ['guest'] });
 			invitedUser = await createUser();
 			invitedUserCredentials = await login(invitedUser.username, password);
+
+			await updatePermission('create-team', ['admin', 'user']);
 			const teamCreateRes = await request
 				.post(api('teams.create'))
 				.set(credentials)
@@ -1636,7 +1638,7 @@ describe('[Groups]', function () {
 				.set(credentials)
 				.send({
 					name: `team-${Date.now()}`,
-					type: 0,
+					type: 1,
 					members: [invitedUser.username, moderatorUser.username],
 				});
 			teamId = teamCreateRes.body.team._id;

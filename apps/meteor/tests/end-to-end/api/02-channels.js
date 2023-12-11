@@ -61,6 +61,8 @@ describe('[Channels]', function () {
 			guestUser = await createUser({ roles: ['guest'] });
 			invitedUser = await createUser();
 			invitedUserCredentials = await login(invitedUser.username, password);
+
+			await updatePermission('create-team', ['admin', 'user']);
 			const teamCreateRes = await request
 				.post(api('teams.create'))
 				.set(credentials)
@@ -1742,6 +1744,7 @@ describe('[Channels]', function () {
 			invitedUserCredentials = await login(invitedUser.username, password);
 			moderatorUserCredentials = await login(moderatorUser.username, password);
 
+			await updatePermission('create-team', ['admin', 'user']);
 			const teamCreateRes = await request
 				.post(api('teams.create'))
 				.set(credentials)
