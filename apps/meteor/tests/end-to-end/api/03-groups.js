@@ -1627,7 +1627,7 @@ describe('[Groups]', function () {
 		let teamId;
 		let teamMainRoomId;
 		before(async () => {
-			testGroup = (await createRoom({ name: `group.test.${Date.now()}`, type: 'c' })).body.group;
+			testGroup = (await createRoom({ name: `group.test.${Date.now()}`, type: 'p' })).body.group;
 			invitedUser = await createUser();
 			moderatorUser = await createUser();
 			invitedUserCredentials = await login(invitedUser.username, password);
