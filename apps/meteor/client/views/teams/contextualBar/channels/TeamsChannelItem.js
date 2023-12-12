@@ -26,8 +26,8 @@ const TeamsChannelItem = ({ room, mainRoomId, onClickView, reload }) => {
 
 	const [showButton, setShowButton] = useState();
 
-	const canRemoveTeamChannel = usePermission('remove-team-channel', rid);
-	const canEditTeamChannel = usePermission('edit-team-channel', rid);
+	const canRemoveTeamChannel = usePermission('remove-team-channel', mainRoomId);
+	const canEditTeamChannel = usePermission('edit-team-channel', mainRoomId);
 	const canDeleteChannel = usePermission(`delete-${type}`, rid);
 	const canDeleteTeamChannel = usePermission(`delete-team-${type === 'c' ? 'channel' : 'group'}`, mainRoomId);
 	const canDelete = canDeleteChannel && canDeleteTeamChannel;

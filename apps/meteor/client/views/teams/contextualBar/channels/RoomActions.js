@@ -29,8 +29,8 @@ const RoomActions = ({ room, mainRoomId, reload }) => {
 	const canDeleteChannel = usePermission(`delete-${type}`, rid);
 	const canDeleteTeamChannel = usePermission(`delete-team-${type === 'c' ? 'channel' : 'group'}`, mainRoomId);
 	const canDelete = canDeleteChannel && canDeleteTeamChannel;
-	const canEditTeamChannel = usePermission('edit-team-channel', rid);
-	const canRemoveTeamChannel = usePermission('remove-team-channel', rid);
+	const canEditTeamChannel = usePermission('edit-team-channel', mainRoomId);
+	const canRemoveTeamChannel = usePermission('remove-team-channel', mainRoomId);
 
 	const updateRoomEndpoint = useEndpointAction('POST', '/v1/teams.updateRoom');
 	const removeRoomEndpoint = useEndpointAction('POST', '/v1/teams.removeRoom', { successMessage: t('Room_has_been_removed') });
