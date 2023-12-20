@@ -251,13 +251,8 @@ const CreateChannelModal = ({ teamId = '', onClose }: CreateChannelModalProps): 
 						<FieldHint id={`${topicId}-hint`}>{t('Channel_what_is_this_channel_about')}</FieldHint>
 					</Field>
 					<Field>
-						<Box display='flex' justifyContent='space-between' alignItems='start'>
-							<Box display='flex' flexDirection='column' width='full'>
-								<FieldLabel htmlFor={privateId}>{t('Private')}</FieldLabel>
-								<FieldHint id={`${privateId}-hint`}>
-									{isPrivate ? t('Only_invited_users_can_acess_this_channel') : t('Everyone_can_access_this_channel')}
-								</FieldHint>
-							</Box>
+						<FieldRow>
+							<FieldLabel htmlFor={privateId}>{t('Private')}</FieldLabel>
 							<Controller
 								control={control}
 								name='isPrivate'
@@ -272,14 +267,14 @@ const CreateChannelModal = ({ teamId = '', onClose }: CreateChannelModalProps): 
 									/>
 								)}
 							/>
-						</Box>
+						</FieldRow>
+						<FieldHint id={`${privateId}-hint`}>
+							{isPrivate ? t('Only_invited_users_can_acess_this_channel') : t('Everyone_can_access_this_channel')}
+						</FieldHint>
 					</Field>
 					<Field>
-						<Box display='flex' justifyContent='space-between' alignItems='start'>
-							<Box display='flex' flexDirection='column' width='full'>
-								<FieldLabel htmlFor={federatedId}>{t('Federation_Matrix_Federated')}</FieldLabel>
-								<FieldHint id={`${federatedId}-hint`}>{t(getFederationHintKey(federatedModule, federationEnabled))}</FieldHint>
-							</Box>
+						<FieldRow>
+							<FieldLabel htmlFor={federatedId}>{t('Federation_Matrix_Federated')}</FieldLabel>
 							<Controller
 								control={control}
 								name='federated'
@@ -294,16 +289,12 @@ const CreateChannelModal = ({ teamId = '', onClose }: CreateChannelModalProps): 
 									/>
 								)}
 							/>
-						</Box>
+						</FieldRow>
+						<FieldHint id={`${federatedId}-hint`}>{t(getFederationHintKey(federatedModule, federationEnabled))}</FieldHint>
 					</Field>
 					<Field>
-						<Box display='flex' justifyContent='space-between' alignItems='start'>
-							<Box display='flex' flexDirection='column' width='full'>
-								<FieldLabel htmlFor={readOnlyId}>{t('Read_only')}</FieldLabel>
-								<FieldHint id={`${readOnlyId}-hint`}>
-									{readOnly ? t('Only_authorized_users_can_write_new_messages') : t('All_users_in_the_channel_can_write_new_messages')}
-								</FieldHint>
-							</Box>
+						<FieldRow>
+							<FieldLabel htmlFor={readOnlyId}>{t('Read_only')}</FieldLabel>
 							<Controller
 								control={control}
 								name='readOnly'
@@ -318,16 +309,14 @@ const CreateChannelModal = ({ teamId = '', onClose }: CreateChannelModalProps): 
 									/>
 								)}
 							/>
-						</Box>
+						</FieldRow>
+						<FieldHint id={`${readOnlyId}-hint`}>
+							{readOnly ? t('Only_authorized_users_can_write_new_messages') : t('All_users_in_the_channel_can_write_new_messages')}
+						</FieldHint>
 					</Field>
 					<Field>
-						<Box display='flex' justifyContent='space-between' alignItems='start'>
-							<Box display='flex' flexDirection='column' width='full'>
-								<FieldLabel htmlFor={encryptedId}>{t('Encrypted')}</FieldLabel>
-								<FieldDescription id={`${encryptedId}-hint`}>
-									{isPrivate ? t('Encrypted_channel_Description') : t('Encrypted_not_available')}
-								</FieldDescription>
-							</Box>
+						<FieldRow>
+							<FieldLabel htmlFor={encryptedId}>{t('Encrypted')}</FieldLabel>
 							<Controller
 								control={control}
 								name='encrypted'
@@ -343,14 +332,14 @@ const CreateChannelModal = ({ teamId = '', onClose }: CreateChannelModalProps): 
 									/>
 								)}
 							/>
-						</Box>
+						</FieldRow>
+						<FieldDescription id={`${encryptedId}-hint`}>
+							{isPrivate ? t('Encrypted_channel_Description') : t('Encrypted_not_available')}
+						</FieldDescription>
 					</Field>
 					<Field>
-						<Box display='flex' justifyContent='space-between' alignItems='start'>
-							<Box display='flex' flexDirection='column' width='full'>
-								<FieldLabel htmlFor={broadcastId}>{t('Broadcast')}</FieldLabel>
-								<FieldHint id={`${broadcastId}-hint`}>{t('Broadcast_channel_Description')}</FieldHint>
-							</Box>
+						<FieldRow>
+							<FieldLabel htmlFor={broadcastId}>{t('Broadcast')}</FieldLabel>
 							<Controller
 								control={control}
 								name='broadcast'
@@ -365,7 +354,8 @@ const CreateChannelModal = ({ teamId = '', onClose }: CreateChannelModalProps): 
 									/>
 								)}
 							/>
-						</Box>
+						</FieldRow>
+						<FieldHint id={`${broadcastId}-hint`}>{t('Broadcast_channel_Description')}</FieldHint>
 					</Field>
 					<Field>
 						<FieldLabel htmlFor={addMembersId}>{t('Add_members')}</FieldLabel>
